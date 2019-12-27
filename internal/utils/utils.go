@@ -1,9 +1,9 @@
 package utils
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,7 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-protos-go/common"
 	mspclient "github.com/hyperledger/fabric-sdk-go/pkg/client/msp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/context"
@@ -20,6 +21,9 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config/lookup"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
+	"github.com/hyperledger/fabric-sdk-go/pkg/util/protolator"
+	"github.com/pkg/errors"
+	"github.com/yakumioto/hlf-deploy/internal/github.com/hyperledger/fabric/sdkinternal/configtxlator/update"
 )
 
 type Mod string
@@ -96,57 +100,87 @@ func GetSigningIdentities(ctx context.ClientProvider, orgs []string) []msp.Signi
 	return signingIdentities
 }
 
-func InitRPCClient(address string) {
-	var err error
+func getProtoMessage(msgName string) proto.Message {
+	var msg proto.Message
 
-	if client == nil {
-		client, err = rpc.DialHTTP("tcp", address)
-		if err != nil {
-			log.Fatalln("dialling rpc error:", err)
-		}
+	switch msgName {
+	case "common.Block":
+		msg = &common.Block{}
+	case "common.Config":
+		msg = &common.Config{}
+	case "common.Envelope":
+		msg = &common.Envelope{}
+	case "common.ConfigUpdate":
+		msg = &common.ConfigUpdate{}
+	default:
+		msg = nil
 	}
+	return msg
 }
 
 func protoDecode(msgName string, input []byte) ([]byte, error) {
-	return protoEncodeAndDecode("Proto.Decode", msgName, input)
+	var msg proto.Message
+	if msg = getProtoMessage(msgName); msg == nil {
+		return nil, errors.New("no message type")
+	}
+
+	if err := proto.Unmarshal(input, msg); err != nil {
+		return nil, errors.Wrapf(err, "error unmarshaling")
+	}
+
+	output := bytes.NewBuffer(nil)
+
+	err := protolator.DeepMarshalJSON(output, msg)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error encoding output")
+	}
+
+	return output.Bytes(), nil
 }
 
 func protoEncode(msgName string, input []byte) ([]byte, error) {
-	return protoEncodeAndDecode("Proto.Encode", msgName, input)
-}
-
-func protoEncodeAndDecode(typ, msgName string, input []byte) ([]byte, error) {
-	var reply []byte
-
-	if err := client.Call(typ, struct {
-		MsgName string
-		Input   []byte
-	}{
-		msgName,
-		input,
-	}, &reply); err != nil {
-		return nil, err
+	var msg proto.Message
+	if msg = getProtoMessage(msgName); msg == nil {
+		return nil, errors.New("no message type")
 	}
 
-	return reply, nil
+	intputbuf := bytes.NewBuffer(input)
+	err := protolator.DeepUnmarshalJSON(intputbuf, msg)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error decoding input")
+	}
+
+	out, err := proto.Marshal(msg)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error marshaling")
+	}
+
+	return out, nil
 }
 
 func computeUpdate(channelName string, origin, updated []byte) ([]byte, error) {
-	var reply []byte
-
-	if err := client.Call("Compute.Update", struct {
-		ChannelName string
-		Origin      []byte
-		Updated     []byte
-	}{
-		channelName,
-		origin,
-		updated,
-	}, &reply); err != nil {
-		return nil, err
+	origConf := &common.Config{}
+	if err := proto.Unmarshal(origin, origConf); err != nil {
+		return nil, errors.Wrapf(err, "error unmarshaling original config")
 	}
 
-	return reply, nil
+	updtConf := &common.Config{}
+	if err := proto.Unmarshal(updated, updtConf); err != nil {
+		return nil, errors.Wrapf(err, "error unmarshaling updated config")
+	}
+
+	cu, err := update.Compute(origConf, updtConf)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error computing config update")
+	}
+	cu.ChannelId = channelName
+
+	outBytes, err := proto.Marshal(cu)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error marshaling computed config update")
+	}
+
+	return outBytes, nil
 }
 
 func GetStdConfigBytes(mspID string, configBytes []byte) []byte {

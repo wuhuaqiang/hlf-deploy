@@ -21,7 +21,6 @@ var (
 	chaincodePolicyNOutOf int32
 	endorsementOrgsName   []string
 
-	rpcAddress         string
 	sysChannel         bool
 	orgConfig          string
 	ordererOrg         bool
@@ -111,7 +110,6 @@ func init() {
 	addOrgChannelCmd.Flags().StringVar(&channelName, "channelName", "mychannel", "Channel name.")
 	addOrgChannelCmd.Flags().StringVar(&orgConfig, "orgConfig", "org.json", "New organitztion config material in JSON.")
 	addOrgChannelCmd.Flags().StringVar(&orgName, "orgName", "", "New organitztion MSP id.")
-	addOrgChannelCmd.Flags().StringVar(&rpcAddress, "rpcAddress", "localhost:1234", "hlf-tools Address.")
 	addOrgChannelCmd.Flags().BoolVar(&ordererOrg, "ordererOrg", false, "Organization is the orderer organization.")
 
 	updateOrgChannelCmd.Flags().StringVar(&fabconfig, "configFile", "config.yaml", "Fabric SDK config file path.")
@@ -120,7 +118,6 @@ func init() {
 	updateOrgChannelCmd.Flags().StringVar(&channelName, "channelName", "mychannel", "Channel name.")
 	updateOrgChannelCmd.Flags().StringVar(&orgConfig, "orgConfig", "org.json", "New organitztion config material in JSON.")
 	updateOrgChannelCmd.Flags().StringVar(&orgName, "orgName", "", "New organitztion MSP id.")
-	updateOrgChannelCmd.Flags().StringVar(&rpcAddress, "rpcAddress", "localhost:1234", "hlf-tools Address.")
 	updateOrgChannelCmd.Flags().BoolVar(&ordererOrg, "ordererOrg", false, "Organization is the orderer organization")
 
 	delOrgChannelCmd.Flags().StringVar(&fabconfig, "configFile", "config.yaml", "Fabric SDK config file path.")
@@ -128,14 +125,12 @@ func init() {
 	delOrgChannelCmd.Flags().BoolVar(&sysChannel, "sysChannel", false, "Channel is system channel.")
 	delOrgChannelCmd.Flags().StringVar(&channelName, "channelName", "mychannel", "Channel name.")
 	delOrgChannelCmd.Flags().StringVar(&orgName, "orgName", "", "New organitztion MSP id.")
-	delOrgChannelCmd.Flags().StringVar(&rpcAddress, "rpcAddress", "localhost:1234", "hlf-tools Address.")
 	delOrgChannelCmd.Flags().BoolVar(&ordererOrg, "ordererOrg", false, "Organization is the orderer organization")
 
 	updateChannelParamCmd.Flags().StringVar(&fabconfig, "configFile", "config.yaml", "Fabric SDK config file path.")
 	updateChannelParamCmd.Flags().StringVar(&ordererOrgName, "ordererOrgName", "OrdererOrg", "Orderer organitztion name.")
 	updateChannelParamCmd.Flags().BoolVar(&sysChannel, "sysChannel", false, "Channel is system channel.")
 	updateChannelParamCmd.Flags().StringVar(&channelName, "channelName", "mychannel", "Channel name.")
-	updateChannelParamCmd.Flags().StringVar(&rpcAddress, "rpcAddress", "localhost:1234", "hlf-tools Address.")
 	updateChannelParamCmd.Flags().StringVar(&batchTimeout, "batchTimeout", "2s", "set batch timeout.")
 	updateChannelParamCmd.Flags().StringVar(&batchSizeAbsolute, "absoluteMaxBytes", "99MB", "set batch size absolute max bytes.")
 	updateChannelParamCmd.Flags().StringVar(&batchSizePreferred, "preferredMaxBytes", "512KB", "set batch size preferred max bytes.")
@@ -145,7 +140,6 @@ func init() {
 	updateChannelStateCmd.Flags().StringVar(&ordererOrgName, "ordererOrgName", "OrdererOrg", "Orderer organitztion name.")
 	updateChannelStateCmd.Flags().BoolVar(&sysChannel, "sysChannel", false, "Channel is system channel.")
 	updateChannelStateCmd.Flags().StringVar(&channelName, "channelName", "mychannel", "Channel name.")
-	updateChannelStateCmd.Flags().StringVar(&rpcAddress, "rpcAddress", "localhost:1234", "hlf-tools Address.")
 	updateChannelStateCmd.Flags().StringVar(&consensusOption.State, "state", "", "Channel consensus state.")
 	updateChannelStateCmd.Flags().StringVar(&consensusOption.Type, "type", "", "Channel consensus type.")
 	updateChannelStateCmd.Flags().StringVar(&consensusOption.OrdererAddress, "ordererAddress", "", "Channel consensus orderer address.")
