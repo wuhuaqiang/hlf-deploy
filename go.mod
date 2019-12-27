@@ -2,6 +2,8 @@ module github.com/yakumioto/hlf-deploy
 
 go 1.13
 
+replace github.com/hyperledger/fabric-sdk-go => /home/mioto/Workspace/me/fabric-sdk-go
+
 require (
 	github.com/Shopify/sarama v1.24.1 // indirect
 	github.com/gogo/protobuf v1.2.1
